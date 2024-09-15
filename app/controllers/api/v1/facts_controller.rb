@@ -2,24 +2,28 @@ class Api::V1::FactsController < ApplicationController
   include AuthenticationCheck
 
   before_action :is_user_logged_in
-  before_action :check_access, only: [:show, :update, :destroy]
+  
+  before_action :set_member, only: [:index, :show, :update, :create, :destroy]
   before_action :set_fact, only: [:show, :update, :destroy]
+  before_action :check_access, only: [:show, :update, :destroy]
+
   # skip_before_action :verify_authenticity_token
   
 
 
   # GET /members/:member_id/facts
   def index
-    render json: { facts: member.facts } # note that because the facts route is nested inside members
+    render json: { facts: @member.facts }, status: 200 # note that because the facts route is nested inside members
     # we return only the facts belonging to that member
   end
 
   # GET /members/:member_id/facts/:id
   def show
+    @member= Member.find_by(id: params[:member_id])
     # your code goes here
       # your code goes here
     if @fact
-      render json: { fact: @fact }
+      render json: { fact: @fact }, status: 200
     else
       render json: { error: "Fact Not Found" }, status: :not_found
     end
@@ -29,7 +33,7 @@ class Api::V1::FactsController < ApplicationController
   # POST /members/:member_id/facts
   def create
   
-    @fact = member.facts.new(fact_params)
+    @fact = @member.facts.new(fact_params)
     if @fact.save
       render json: @fact, status: 201
     else
@@ -66,13 +70,7 @@ class Api::V1::FactsController < ApplicationController
 
   private
 
-  def member
-    @member ||= Member.find(params[:member_id])
-    if @member.nil?
-      render json: { error: "Member not found" }, status: :not_found
-    end
-  end
-
+  
   def fact_params
     params.require(:fact).permit(:fact_text, :likes)
   end
@@ -83,13 +81,17 @@ class Api::V1::FactsController < ApplicationController
     render json: { error: "Fact not found" }, status: :not_found unless @fact
   end
   
-  def check_access 
-    if member.present?
-      if member.user_id != current_user.id
-        render json: { message: "The current user is not authorized for that data."}, status: :unauthorized
-      end
-    else
-      render json: { error: "Member not found" }, status: :not_found
+  def set_member
+    
+    @member = Member.find_by(id: params[:member_id])
+    
+  end
+
+  def check_access
+    if (@member.user_id != current_user.id) 
+      render json: { message: "The current user is not authorized for that data."}, status: :unauthorized
+      return false
     end
+    true
   end
 end
