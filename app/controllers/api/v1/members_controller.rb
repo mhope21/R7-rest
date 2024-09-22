@@ -3,7 +3,7 @@ class Api::V1::MembersController < ApplicationController
 
   before_action :is_user_logged_in
   before_action :set_member, only: [:show, :update, :destroy]
-  # skip_before_action :verify_authenticity_token
+  # skip_before_action :verify_authenticity_token, only: [:create]
 
   # GET /members
   def index
@@ -13,9 +13,12 @@ class Api::V1::MembersController < ApplicationController
 
   # GET /members/:id
   def show
+    Rails.logger.debug('I have been called.')
     if check_access
       # your code goes here
+      Rails.logger.debug('Access checked')
       render json: {member: @member}
+      Rails.logger.debug('member shown')
     end
   end
 
@@ -46,6 +49,7 @@ class Api::V1::MembersController < ApplicationController
 
   # DELETE /members/:id
   def destroy
+    Rails.logger.debug('I am being called')
     if check_access
       @member.destroy
       render json: { message: 'Member record successfully deleted.'}, status: 200
